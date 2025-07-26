@@ -1,0 +1,19 @@
+name: "clickup-task-action"
+description: "Create ClickUp task or sub‑task from commit messages"
+inputs:
+  list_id:
+    description: "Default ClickUp list ID (overridden when mode=sub)"
+    required: true
+  mode:
+    description: "`auto` (decide from prefix) | `task` | `sub`"
+    required: false
+    default: "auto"
+  parent_task_id:
+    description: "Parent ClickUp task ID when creating a sub‑task"
+    required: false
+runs:
+  using: "node20"
+  main: "dist/index.js"
+branding:
+  icon: "check-square"
+  color: "purple"
