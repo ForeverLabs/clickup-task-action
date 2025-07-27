@@ -3,7 +3,7 @@
 GitHub Action that scans commits on a push and creates a ClickUp **task** or **sub‑task**.
 
 ```yaml
-- uses: org/clickup-task-action@v1
+- uses: ForeverLabs/clickup-task-action@v1
   with:
     list_id: ${{ vars.CU_LIST_ID }}
     mode: auto # auto | task | sub
@@ -21,18 +21,40 @@ GitHub Action that scans commits on a push and creates a ClickUp **task** or **s
 
 See src/index.ts for full logic.
 
-## Usage
+## Setup
 
-Next, in any consuming repo:
+### 1. Configure Secrets in Your Repository
+
+In the repository where you want to use this action:
+
+**Repository Secrets:**
+
+- `CLICKUP_TOKEN` = Your ClickUp API token (get from [ClickUp Apps](https://app.clickup.com/settings/apps))
+
+**Repository Variables:**
+
+- `CU_LIST_ID` = Your ClickUp list ID (from the list URL)
+
+### 2. Add Workflow
 
 ```yaml
-steps:
-  - uses: actions/checkout@v4
-  - uses: YOUR_ORG/clickup-task-action@v1
-    with:
-      list_id: ${{ vars.CU_LIST_ID }}
-    env:
-      CU_TOKEN: ${{ secrets.CLICKUP_TOKEN }}
+# .github/workflows/clickup.yml
+name: ClickUp Integration
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  create-tasks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ForeverLabs/clickup-task-action@v1
+        with:
+          list_id: ${{ vars.CU_LIST_ID }}
+        env:
+          CU_TOKEN: ${{ secrets.CLICKUP_TOKEN }}
 ```
 
 ## Development
