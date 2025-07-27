@@ -29,22 +29,43 @@ interface Commit {
 }
 
 async function run() {
+  console.log(`🔧 Environment check:`);
+  console.log(`- CU_TOKEN: ${CU_TOKEN ? "✅ Set" : "❌ Missing"}`);
+  console.log(`- List ID: ${listId || "❌ Missing"}`);
+  console.log(`- Mode: ${mode}`);
+  console.log(`- Parent Task ID: ${explicitParent || "Not set"}`);
+
+  console.log(`\nProcessing ${payload.commits?.length || 0} commits...`);
+
   const commits = payload.commits as Commit[];
+  let processed = 0;
+
   for (const commit of commits) {
+    console.log(`\nProcessing commit: ${commit.id}`);
+    console.log(`Message: "${commit.message}"`);
+
     const action = decideAction(commit.message);
-    if (!action) continue;
+    if (!action) {
+      console.log(`❌ Skipping: No TASK: or SUB: prefix found`);
+      continue;
+    }
+
+    console.log(`✅ Action detected: ${action.kind} - "${action.title}"`);
+    processed++;
 
     if (action.kind === "task") {
       await createTask(action.title, commit.url);
     } else {
       const parentId = action.parentId ?? explicitParent;
       if (!parentId) {
-        console.warn(`Skipping commit ${commit.id}: no parent task id`);
+        console.warn(`❌ Skipping commit ${commit.id}: no parent task id`);
         continue;
       }
       await createSubTask(parentId, action.title, commit.url);
     }
   }
+
+  console.log(`\n🎯 Summary: Processed ${processed} commits that matched patterns`);
 }
 
 type Decision = { kind: "task"; title: string } | { kind: "sub"; parentId?: string; title: string } | null;
@@ -67,23 +88,35 @@ function decideAction(msg: string): Decision {
 }
 
 async function createTask(title: string, commitUrl: string) {
-  await cu.post(`/list/${listId}/task`, {
-    name: title,
-    description: `Created from commit ${commitUrl}`,
-    tags: ["auto-gh"],
-    priority: 2,
-  });
-  console.log(`✓ Task created: ${title}`);
+  try {
+    console.log(`🚀 Creating task in list ${listId}...`);
+    const response = await cu.post(`/list/${listId}/task`, {
+      name: title,
+      description: `Created from commit ${commitUrl}`,
+      tags: ["auto-gh"],
+      priority: 2,
+    });
+    console.log(`✓ Task created: ${title} (ID: ${response.data.id})`);
+  } catch (error: any) {
+    console.error(`❌ Failed to create task "${title}":`, error.response?.data || error.message);
+    throw error;
+  }
 }
 
 async function createSubTask(parentId: string, title: string, commitUrl: string) {
-  // ClickUp: `parent` refers to parent task id
-  await cu.post(`/task`, {
-    name: title,
-    parent: parentId,
-    description: `Sub‑task from commit ${commitUrl}`,
-  });
-  console.log(`✓ Sub‑task created under ${parentId}: ${title}`);
+  try {
+    console.log(`🚀 Creating sub-task under parent ${parentId}...`);
+    // ClickUp: `parent` refers to parent task id
+    const response = await cu.post(`/task`, {
+      name: title,
+      parent: parentId,
+      description: `Sub‑task from commit ${commitUrl}`,
+    });
+    console.log(`✓ Sub‑task created under ${parentId}: ${title} (ID: ${response.data.id})`);
+  } catch (error: any) {
+    console.error(`❌ Failed to create sub-task "${title}":`, error.response?.data || error.message);
+    throw error;
+  }
 }
 
 run().catch((err) => {
