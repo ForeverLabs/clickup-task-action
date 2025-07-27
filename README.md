@@ -8,16 +8,24 @@ GitHub Action that scans commits on a push and creates a ClickUp **task** or **s
     list_id: ${{ vars.CU_LIST_ID }}
     mode: auto # auto | task | sub
     parent_task_id: CU-123 # only for sub mode
+    assignee_id: ${{ vars.CU_ASSIGNEE_ID }} # optional: assign tasks to user
   env:
     CU_TOKEN: ${{ secrets.CLICKUP_TOKEN }}
 ```
 
 ## Commit message conventions
 
-**TASK: \<title\>** → new task in list_id
+**TASK: \<title\>** → new task in list_id (assigned to user if assignee_id is set)
 
-**SUB:\<parentID\> \<title\>** → sub‑task under \<parentID\>
+**SUB:\<parentID\> \<title\>** → sub‑task under \<parentID\> (assigned to user if assignee_id is set)
 (omit \<parentID\> and supply parent_task_id via input if you prefer)
+
+**Features:**
+
+- ✅ **Auto-tagging** with `auto-gh` tag
+- ✅ **User assignment** if `assignee_id` is provided
+- ✅ **No priority flags** (cleaner task creation)
+- ✅ **Commit URL** in task description for traceability
 
 See src/index.ts for full logic.
 
@@ -34,6 +42,13 @@ In the repository where you want to use this action:
 **Repository Variables:**
 
 - `CU_LIST_ID` = Your ClickUp list ID (from the list URL)
+- `CU_ASSIGNEE_ID` = Your ClickUp user ID (optional, for task assignment)
+
+**Getting ClickUp IDs:**
+
+📋 **List ID**: From the list URL `https://app.clickup.com/123456/v/l/789123`, the list ID is `789123`
+
+👤 **User ID**: Go to [ClickUp API](https://app.clickup.com/api) → Try "Get authorized user" → Copy the `id` field
 
 ### 2. Add Workflow
 
@@ -53,6 +68,7 @@ jobs:
       - uses: ForeverLabs/clickup-task-action@v1
         with:
           list_id: ${{ vars.CU_LIST_ID }}
+          assignee_id: ${{ vars.CU_ASSIGNEE_ID }} # optional
         env:
           CU_TOKEN: ${{ secrets.CLICKUP_TOKEN }}
 ```

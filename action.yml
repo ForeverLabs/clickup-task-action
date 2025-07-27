@@ -11,6 +11,9 @@ inputs:
   parent_task_id:
     description: "Parent ClickUp task ID when creating a sub‑task"
     required: false
+  assignee_id:
+    description: "ClickUp user ID to assign tasks to (optional)"
+    required: false
 runs:
   using: "node20"
   main: "dist/index.js"
