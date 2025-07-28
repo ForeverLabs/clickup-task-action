@@ -9,21 +9,23 @@ GitHub Action that scans commits on a push and creates a ClickUp **task** or **s
     mode: auto # auto | task | sub
     parent_task_id: CU-123 # only for sub mode
     assignee_id: ${{ vars.CU_ASSIGNEE_ID }} # optional: assign tasks to user
+    mark_complete: true # optional: auto-complete tasks (default: false)
   env:
     CU_TOKEN: ${{ secrets.CLICKUP_TOKEN }}
 ```
 
 ## Commit message conventions
 
-**TASK: \<title\>** → new task in list_id (assigned to user if assignee_id is set)
+**TASK: \<title\>** → new task in list_id (assigned + completed if configured)
 
-**SUB:\<parentID\> \<title\>** → sub‑task under \<parentID\> (assigned to user if assignee_id is set)
+**SUB:\<parentID\> \<title\>** → sub‑task under \<parentID\> (assigned + completed if configured)
 (omit \<parentID\> and supply parent_task_id via input if you prefer)
 
 **Features:**
 
 - ✅ **Auto-tagging** with `auto-gh` tag
 - ✅ **User assignment** if `assignee_id` is provided
+- ✅ **Auto-completion** if `mark_complete: true` is set
 - ✅ **No priority flags** (cleaner task creation)
 - ✅ **Commit URL** in task description for traceability
 
@@ -50,6 +52,24 @@ In the repository where you want to use this action:
 
 👤 **User ID**: Go to [ClickUp API](https://app.clickup.com/api) → Try "Get authorized user" → Copy the `id` field
 
+## 🎯 Workflow Options
+
+### Standard Workflow (Track Work)
+
+```yaml
+mark_complete: false # Default - tasks created as "To Do"
+```
+
+Use this when you want to **track work that needs to be done**.
+
+### Completion Workflow (Log Work Done)
+
+```yaml
+mark_complete: true # Tasks automatically marked complete
+```
+
+Use this when you want to **log work that's already been completed** in your commits.
+
 ### 2. Add Workflow
 
 ```yaml
@@ -69,6 +89,7 @@ jobs:
         with:
           list_id: ${{ vars.CU_LIST_ID }}
           assignee_id: ${{ vars.CU_ASSIGNEE_ID }} # optional
+          mark_complete: true # optional: auto-complete tasks
         env:
           CU_TOKEN: ${{ secrets.CLICKUP_TOKEN }}
 ```

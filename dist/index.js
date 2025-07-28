@@ -9894,6 +9894,7 @@ const listId = process.env.INPUT_LIST_ID; // from action input
 const mode = (process.env.INPUT_MODE ?? "auto");
 const explicitParent = process.env.INPUT_PARENT_TASK_ID;
 const assigneeId = process.env.INPUT_ASSIGNEE_ID;
+const markComplete = process.env.INPUT_MARK_COMPLETE === "true";
 const payloadPath = process.env.GITHUB_EVENT_PATH;
 const payload = JSON.parse((0,external_node_fs_namespaceObject.readFileSync)(payloadPath, "utf8"));
 // ---------------------------------------------------------------------------
@@ -9910,6 +9911,7 @@ async function run() {
     console.log(`- Mode: ${mode}`);
     console.log(`- Parent Task ID: ${explicitParent || "Not set"}`);
     console.log(`- Assignee ID: ${assigneeId || "Not set"}`);
+    console.log(`- Mark Complete: ${markComplete ? "✅ Yes" : "❌ No"}`);
     console.log(`\nProcessing ${payload.commits?.length || 0} commits...`);
     const commits = payload.commits;
     let processed = 0;
@@ -9936,6 +9938,21 @@ async function run() {
         }
     }
     console.log(`\n🎯 Summary: Processed ${processed} commits that matched patterns`);
+}
+async function markTaskComplete(taskId) {
+    if (!markComplete)
+        return;
+    try {
+        console.log(`✅ Marking task ${taskId} as complete...`);
+        await cu.put(`/task/${taskId}`, {
+            status: "Complete",
+        });
+        console.log(`✓ Task ${taskId} marked as complete`);
+    }
+    catch (error) {
+        console.warn(`⚠️ Could not mark task ${taskId} as complete:`, error.response?.data || error.message);
+        // Don't throw - task creation succeeded, completion is optional
+    }
 }
 // TASK: Title      → new task
 // SUB:CU-123 Title → sub‑task under CU‑123 (or --parent flag)
@@ -9966,6 +9983,8 @@ async function createTask(title, commitUrl) {
         }
         const response = await cu.post(`/list/${listId}/task`, taskData);
         console.log(`✓ Task created: ${title} (ID: ${response.data.id})`);
+        // Mark as complete if requested
+        await markTaskComplete(response.data.id);
     }
     catch (error) {
         console.error(`❌ Failed to create task "${title}":`, error.response?.data || error.message);
@@ -9989,6 +10008,8 @@ async function createSubTask(parentId, title, commitUrl) {
         }
         const response = await cu.post(`/list/${listId}/task`, subtaskData);
         console.log(`✓ Sub‑task created under ${parentId}: ${title} (ID: ${response.data.id})`);
+        // Mark as complete if requested
+        await markTaskComplete(response.data.id);
     }
     catch (error) {
         console.error(`❌ Failed to create sub-task "${title}":`, error.response?.data || error.message);

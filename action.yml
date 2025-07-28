@@ -14,6 +14,10 @@ inputs:
   assignee_id:
     description: "ClickUp user ID to assign tasks to (optional)"
     required: false
+  mark_complete:
+    description: "Mark created tasks/subtasks as complete (true/false, default: false)"
+    required: false
+    default: "false"
 runs:
   using: "node20"
   main: "dist/index.js"
