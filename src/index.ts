@@ -116,6 +116,7 @@ async function createTask(title: string, commitUrl: string) {
 async function createSubTask(parentId: string, title: string, commitUrl: string) {
   try {
     console.log(`🚀 Creating sub-task under parent ${parentId}...`);
+    console.log(`🔍 Using list ${listId} for subtask creation`);
 
     const subtaskData: any = {
       name: title,
@@ -130,10 +131,13 @@ async function createSubTask(parentId: string, title: string, commitUrl: string)
       console.log(`👤 Assigning subtask to user ID: ${assigneeId}`);
     }
 
-    const response = await cu.post(`/task`, subtaskData);
+    const response = await cu.post(`/list/${listId}/task`, subtaskData);
     console.log(`✓ Sub‑task created under ${parentId}: ${title} (ID: ${response.data.id})`);
   } catch (error: any) {
     console.error(`❌ Failed to create sub-task "${title}":`, error.response?.data || error.message);
+    console.error(`🔍 Parent ID used: "${parentId}"`);
+    console.error(`🔍 List ID used: "${listId}"`);
+    console.error(`💡 Tip: Make sure parent task ID is a valid ClickUp task ID (like "CU-123" or the full task ID)`);
     throw error;
   }
 }
